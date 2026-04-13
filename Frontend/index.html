@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hihaho Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="header">
+        <h2>Hihaho Dashboard</h2>
+    </div>
+
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-player">Video Player</button>
+        <button class="tab-btn" data-tab="tab-raw">Raw JSON</button>
+        <button class="tab-btn" data-tab="tab-table">Data Table</button>
+        <button class="tab-btn" data-tab="tab-charts">User Charts</button>
+        <button class="tab-btn" data-tab="tab-video">Video Charts</button>
+        <button class="tab-btn" data-tab="tab-salesforce">Salesforce Data</button>
+        
+        <div class="multi-select tab-lrs-selector">
+            <button class="multi-select-btn" id="lrs-btn">🗄️ SCORM Cloud ▾</button>
+            <div class="multi-select-dropdown hidden" id="lrs-dropdown">
+                <label class="multi-select-option">
+                    <input type="radio" name="lrs" value="scorm" checked />SCORM Cloud
+                </label>
+                <label class="multi-select-option">
+                    <input type="radio" name="lrs" value="lrsql" />SQL LRS (local)
+                </label>
+                <label class="multi-select-option">
+                    <input type="radio" name="lrs" value="scorm_test" />Scorm Cloud (Test)
+                </label>
+            </div>
+        </div>
+
+        <label>
+            <input type="checkbox" id="isTest-checkbox"> isTest?
+        </label>
+
+        <button id="auth-btn">Login with Google</button>
+    </div>
+
+
+    <div id="search-bar" class="hidden">
+        <div class="multi-select">
+            <button class="multi-select-btn" id="actor-btn">All Users ▾</button>
+            <div class="multi-select-dropdown hidden" id="actor-dropdown">
+            <label class="multi-select-option">
+                <input type="checkbox" value="" checked /> All Users
+            </label>
+            <!-- populated dynamically from CLASSROOM -->
+            </div>
+        </div>
+
+        <!-- Verb checklist dropdown -->
+        <div class="multi-select">
+            <button class="multi-select-btn" id="verb-btn">All Verbs ▾</button>
+            <div class="multi-select-dropdown hidden" id="verb-dropdown">
+            <label class="multi-select-option"><input type="checkbox" value="" checked /> All Verbs</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/initialized" /> Initialized</label>
+            <label class="multi-select-option"><input type="checkbox" value="https://w3id.org/xapi/video/verbs/played" /> Played</label>
+            <label class="multi-select-option"><input type="checkbox" value="https://w3id.org/xapi/video/verbs/paused" /> Paused</label>
+            <label class="multi-select-option"><input type="checkbox" value="https://w3id.org/xapi/video/verbs/seeked" /> Seeked</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/interacted" /> Interacted</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/answered" /> Answered</label>
+            <label class="multi-select-option"><input type="checkbox" value="https://w3id.org/xapi/video/verbs/terminated" /> Terminated</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/completed" /> Completed</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/passed" /> Passed</label>
+            <label class="multi-select-option"><input type="checkbox" value="http://adlnet.gov/expapi/verbs/failed" /> Failed</label>
+            </div>
+        </div>
+
+        <!-- Video checklist dropdown -->
+        <div class="multi-select">
+            <button class="multi-select-btn" id="video-btn">All Videos ▾</button>
+            <div class="multi-select-dropdown hidden" id="video-dropdown">
+            <label class="multi-select-option">
+                <input type="checkbox" value="" checked /> All Videos
+            </label>
+            <!-- populated dynamically -->
+            </div>
+        </div>
+
+        <input type="datetime-local" id="date-from" />
+        <input type="datetime-local" id="date-to" />
+
+        <select id="statement-limit">
+            <option value="100">Last 100</option>
+            <option value="200">Last 200</option>
+            <option value="500">Last 500</option>
+            <option value="800">Last 800</option>
+            <option value="1000">Last 1000</option>
+            <option value="2000">Last 2000</option>
+            <option value="3000">Last 3000</option>
+            <option value="4000">Last 4000</option>
+        </select>
+
+        <button id="search-btn">Search</button>
+    </div>
+
+
+    <div id="tab-player" class="tab-content">
+        <div class="main-layout">
+            <div class="player-section">   
+                <h3 id="video-title">Select a video</h3>
+                <iframe id="hihaho-iframe"
+                    loading="lazy"
+                    webkitAllowFullScreen="true"
+                    mozallowfullscreen="true"
+                    allowfullscreen="allowfullscreen"
+                    width="800"
+                    height="420"
+                    allow="autoplay; fullscreen; clipboard-read; clipboard-write">
+                </iframe>
+                <pre id="log"></pre>
+            </div>
+
+            <div class="sidebar">
+                <h3>Videos</h3>
+                <div id="video-list">Loading...</div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <button id="flood-btn">Flood Database</button>
+            <pre id="flood-display">Not Flooded</pre>
+        </div>
+    </div>
+
+
+    <div id="tab-raw" class="tab-content hidden">
+        <div class="dashboard">
+            <div id="raw-display">No data yet — run a search.</div>
+            <div class="pagination">
+                <button id="prev-btn" disabled>← Previous</button>
+                <span id="page-indicator">Page 1</span>
+                <button id="next-btn" disabled>Next →</button>
+            </div>
+
+            <button id="download-btn">Export CSV</button>
+        </div>
+    </div>
+
+
+    <div id="tab-table" class="tab-content hidden">
+        <div class="dashboard">
+            <div id="summary-display">No data yet - run a search.</div>
+        </div>
+    </div>
+
+
+    <div id="tab-charts" class="tab-content hidden">
+        <div class="dashboard">
+            <h3>Activity Over Time</h3>
+            <canvas id="activity-time-chart"></canvas>
+        </div>
+
+        <div class="dashboard">
+            <h3>Activity Per User</h3>
+            <canvas id="activity-user-chart"></canvas>
+        </div>
+
+        <div class="dashboard">
+            <h3>At-Risk Students</h3>
+            <div class="chart-controls">
+                <label>
+                    <input type="checkbox" id="strict-mode-risk" />
+                    Strict mode — must have passed to count as completed
+                </label>
+            </div>
+            <canvas id="engagement-chart"></canvas>
+            <div id="at-risk-table"></div>
+            <button id="send-leads-btn">Send Leads</button>
+        </div>
+
+        <div class="dashboard">
+            <h3>Engagement Level per User</h3>
+            <canvas id="engagement-breakdown-chart"></canvas>
+        </div>
+    </div>
+
+    <div id="tab-video" class="tab-content hidden">
+        <div class="dashboard">
+            <h3>Completion Rate per Video</h3>
+            <div class="chart-controls">
+                <label>
+                    <input type="checkbox" id="strict-mode-completion" />
+                    Strict mode — only count passed as completed
+                </label>
+            </div>
+            <canvas id="completion-rate-chart"></canvas>
+        </div>
+
+        <div class="dashboard">
+            <h3>🎯 Video Interaction Heatmap</h3>
+            <div class="chart-controls">
+                <label><input type="checkbox" id="heatmap-paused" checked /> Paused</label>
+                <label><input type="checkbox" id="heatmap-seeked" checked /> Seeked</label>
+                <label><input type="checkbox" id="heatmap-played" checked /> Played/Resumed</label>
+                <label><input type="checkbox" id="heatmap-interacted" checked /> Interacted</label>
+                <label style="margin-left: 16px;">Bucket size:
+                <select id="heatmap-bucket">
+                    <option value="10">10 seconds</option>
+                    <option value="30" selected>30 seconds</option>
+                    <option value="60">60 seconds</option>
+                </select>
+                </label>
+            </div>
+            <div id="heatmap-video-list"></div>
+        </div>
+    </div>
+
+    <div id="tab-salesforce" class="tab-content hidden">
+        <div class="dashboard">
+            <div id="salesforce-display">No leads yet - run a search.</div>
+            <button id="salesforce-btn">Retrieve all Leads</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <h2>Footer</h2>
+    </div> 
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
