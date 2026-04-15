@@ -635,11 +635,21 @@ function restoreSession() {
   }
 }
 
-function logout() {
+async function logout() {
+  const sessionToken = sessionStorage.getItem("sessionToken");
+
+  if (sessionToken) {
+    const response = await fetch("YOUR_API_URL/auth/logout", {
+      method: "POST",
+      headers: { "x-session-token": sessionToken }
+    });
+  }
+
   isLoggedIn = false;
   currentUser = null;
   sessionStorage.clear();
-  google.accounts.id.disableAutoSelect()
+  google.accounts.id.cancel();
+  google.accounts.id.disableAutoSelect();
   updateAuthUI();
 }
 

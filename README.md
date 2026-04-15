@@ -16,6 +16,7 @@ A web dashboard for tracking and analysing xAPI (Tin Can) statements generated b
 - [UI Overview](#ui-overview)
   - [Tabs](#tabs)
   - [Other Settings](#other-settings)
+- [Syncing] (#syncing)
 
 ---
 
@@ -165,10 +166,17 @@ A dropdown in the tab bar lets you switch between connected LRS endpoints:
 - **SQL LRS (local)** — local LRS for development
 - **SCORM Cloud (Test)** — isolated test endpoint, used automatically when *isTest* is toggled on
 
-To add or remove an LRS option, edit the `<div class="multi-select tab-lrs-selector">` block in `index.html` and add a corresponding config entry in the Lambda's `LRS_CONFIGS` object.
+To add or remove an LRS option, edit the `<div class="multi-select tab-lrs-selector">` block in `index.html` and add a corresponding config entry in the Lambda's `LRS_CONFIGS` object. Also make sure that a corresponding LRS is included inside the LRS_CONFIGS array.
 
 #### isTest Toggle
 Switches the active LRS to the test SCORM Cloud endpoint and loads test videos defined in the Lambda rather than real Hihaho videos. Use this to run the **Flood Database** tool (which generates synthetic statements for all student personas) without polluting your production data.
 
 #### Login with Google
 Authenticates via Google OAuth2 (PKCE flow). Once signed in, the player appends your email to the Hihaho embed URL so the video player recognises you automatically — no manual email prompt required. The button label changes to **Logout (your@email.com)** while a session is active.
+
+#### Syncing
+For convenience, use AWS IAM to sync Visual Studio Code with the s3 bucket, and run these commands to sync edits made to the files:
+ - aws s3 sync ./ s3://{s3_BUCKET_NAME}
+ - aws cloudfront create-invalidation --distribution-id {DISTRIBUTION_ID} --paths "/*"
+By default all files in the current path directory will be synced to the s3 Bucket / Cloudfront. If files not meant to be uploaded are accidentally uploaded, go to the s3 bucket and manually delete it.
+

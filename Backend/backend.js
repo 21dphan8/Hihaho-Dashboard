@@ -51,6 +51,14 @@ export const handler = async (event) => {
     return await handleValidateSession(event);
   }
 
+  if (path.endsWith("/auth/logout") && method === "POST") {
+    const sessionToken = event.headers?.["x-session-token"];
+    if (sessionToken && activeSessions[sessionToken]) {
+      delete activeSessions[sessionToken];
+    }
+    return corsResponse(200, { success: true });
+  } 
+
   // ── Video list route ──────────────────────────────────
   const isTest = event.queryStringParameters?.test === "true";
   console.log("isTest:", isTest);
