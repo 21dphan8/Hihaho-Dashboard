@@ -174,9 +174,10 @@ Switches the active LRS to the test SCORM Cloud endpoint and loads test videos d
 #### Login with Google
 Authenticates via Google OAuth2 (PKCE flow). Once signed in, the player appends your email to the Hihaho embed URL so the video player recognises you automatically — no manual email prompt required. The button label changes to **Logout (your@email.com)** while a session is active.
 
-#### Syncing
+### Syncing
 For convenience, use AWS IAM to sync Visual Studio Code with the s3 bucket, and run these commands to sync edits made to the files:
  - aws s3 sync ./ s3://{s3_BUCKET_NAME}
  - aws cloudfront create-invalidation --distribution-id {DISTRIBUTION_ID} --paths "/*"
+ 
 By default all files in the current path directory will be synced to the s3 Bucket / Cloudfront. If files not meant to be uploaded are accidentally uploaded, go to the s3 bucket and manually delete it.
 
