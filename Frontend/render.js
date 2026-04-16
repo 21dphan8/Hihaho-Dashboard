@@ -292,8 +292,8 @@ export function renderAtRisk() {
 
     let risk;
     if (rate === 0 && terminated > 0)          risk = "high";
-    else if (rate === 0)                        risk = "high";
-    else if (rate < 50 || failed > completions) risk = "medium";
+    else if (rate < 50)                        risk = "high";
+    else if (rate < 70 || failed > completions) risk = "medium";
     else                                        risk = "low";
 
     return { name, actor, attempts, completions, failed, terminated, rate, risk };
