@@ -1,4 +1,4 @@
-import { allStatements, rawStatements, currentPage, atRiskData } from './app.js';
+import { allStatements, rawStatements, currentPage, potentialLeadData } from './app.js';
 
 let timeChart = null;
 let userChart = null;
@@ -300,8 +300,8 @@ export function renderAtRisk() {
   });
 
   actorData.sort((a, b) => a.rate - b.rate);
-  atRiskData.length = 0;
-  atRiskData.push(...actorData);
+  potentialLeadData.length = 0;
+  potentialLeadData.push(...actorData);
 
   // ── Engagement Chart ──────────────────
   const labels  = actorData.map(d => d.actor);

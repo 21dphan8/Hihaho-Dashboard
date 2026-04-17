@@ -485,12 +485,15 @@ async function getStatements(event) {
 
   // Strip lrs param before forwarding to LRS
   const forwardParams = { ...event.queryStringParameters };
-  const limit = Math.min(parseInt(forwardParams.limit ?? 100), 4000);
   console.log("Forward Params: ", forwardParams);
-  console.log("Limit: ", limit);
+  const limit = Math.min(parseInt(forwardParams.limit ?? 100), 4000);
+  const since = forwardParams.since ? new Date(forwardParams.since) : null;
+  const until = forwardParams.until ? new Date(forwardParams.until) : null;
   delete forwardParams.lrs;
   delete forwardParams.test;
   delete forwardParams.limit;
+  delete forwardParams.since;
+  delete forwardParams.until;
   const baseParams = new URLSearchParams(forwardParams).toString();
   console.log("Base Params: ", baseParams);
 
@@ -509,7 +512,17 @@ async function getStatements(event) {
     // Appends retrieved statements to the allFetched array
     const data = await lrsResponse.json();
     const statements = data.statements ?? [];
-    allFetched = allFetched.concat(statements);
+    console.log("Statements: ", statements.length);
+
+    // Filters statements to ensure it abides by since and until parameters
+    const filtered = statements.filter(s => {
+      const ts = new Date(s.timestamp);
+      if (since && ts < since) return false;
+      if (until && ts > until) return false;
+      return true;
+    });
+    console.log("Filtered: ", filtered.length);
+    allFetched = allFetched.concat(filtered);
 
     // Follow the `more` URL if we still need more results
     if (data.more && allFetched.length < limit) nextUrl = `${new URL(lrs.endpoint).origin}${data.more}`;

@@ -24,7 +24,7 @@ const ACTOR = {
 export let allStatements = [];
 export let rawStatements = [];
 export let currentPage = 0;
-export let atRiskData = [];
+export let potentialLeadData = [];
 
 
 // ----------------------------------------- Event Handler ----------------------------------------
@@ -373,9 +373,10 @@ function sendStatement(actor, verbID, videoID, extensions = {}) {
   .catch(err => console.log(`Failed to send statement: ${err}`));
 }
 
-// =======================================================
-// Search
-// =======================================================
+// ------------------------------------ Search -----------------------------------
+// NOTE: When using test statements, the timestamp and stored are drastically diffrent
+// In real enviroment the times would be near identical.
+// Currently the query for those inputs are commented off and replaced with a temporary check on the client side
 async function searchLRS () {
   const actorEmails = getCheckedValues("actor-dropdown");
   const verbIds = getCheckedValues("verb-dropdown");
@@ -396,11 +397,7 @@ async function searchLRS () {
   if (dateFrom) params.append("since", new Date(dateFrom + "T00:00:00Z").toISOString());
   if (dateTo) params.append("until", new Date(dateTo + "T23:59:59Z").toISOString());
   
-  // FIXME: ENsure the backend can accept test as a parameter
-  console.log("parameters:", `${LAMBDA_URL}/statements?${params.toString()}&lrs=${getActiveLRS()}`);
   const response = await fetch(`${LAMBDA_URL}/statements?${params.toString()}&lrs=${getActiveLRS()}`);
-  console.log("response:", response);
-
   const data = await response.json();
   allStatements = data.statements ?? [];
   console.log("All Statements: ", allStatements);
@@ -554,19 +551,20 @@ async function initGoogleAuth() {
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-// 
+// Handles google Callback
 async function handleGoogleCallback() {
   const params       = new URLSearchParams(window.location.search);
   const code         = params.get("code");
   const codeVerifier = sessionStorage.getItem("pkce_verifier");
 
-  if (!code || !codeVerifier) return; // not a callback, normal page load
+  if (!code || !codeVerifier) return;
 
-  // Clean URL so code doesn't linger or get reused
+  // Clean up URL to avoid misuse
   window.history.replaceState({}, document.title, window.location.pathname);
   sessionStorage.removeItem("pkce_verifier");
 
   try {
+    // Attempts login
     const res  = await fetch(`${LAMBDA_URL}/auth/google`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
@@ -574,12 +572,14 @@ async function handleGoogleCallback() {
     });
     const data = await res.json();
 
+    // Login Failure
     if (!data.success) {
       console.error("Auth failed:", data.error);
       alert(`Login failed: ${data.error}`);
       return;
     }
 
+    // Update frontend based on login
     isLoggedIn  = true;
     currentUser = {
       email:        data.email,
@@ -589,15 +589,13 @@ async function handleGoogleCallback() {
     sessionStorage.setItem("sessionToken", data.sessionToken);
     sessionStorage.setItem("userEmail",    data.email);
     sessionStorage.setItem("userName",     data.name);
-
     updateAuthUI();
-    console.log("Logged in as:", data.email);
-
   } catch (err) {
     console.error("Auth error:", err);
   }
 }
 
+// Update webpage UI
 function updateAuthUI() {
   const btn = document.getElementById("auth-btn");
   if (isLoggedIn) {
@@ -607,6 +605,7 @@ function updateAuthUI() {
   }
 }
 
+// Restores previously logged in sessions
 function restoreSession() {
   const sessionToken = sessionStorage.getItem("sessionToken");
   const email        = sessionStorage.getItem("userEmail");
@@ -620,6 +619,7 @@ function restoreSession() {
   }
 }
 
+// logs out if logged in
 async function logout() {
   const sessionToken = sessionStorage.getItem("sessionToken");
 
@@ -638,6 +638,7 @@ async function logout() {
   updateAuthUI();
 }
 
+// Returns current actor
 function getActor() {
   if (currentUser) {
     return {
@@ -646,13 +647,12 @@ function getActor() {
       mbox:       `mailto:${currentUser.email}`
     };
   }
-  
+
   return ACTOR;
 }
 
-// =======================================================
-// Salesforce
-// =======================================================
+
+// ----------------------------------------------- Salesforce ------------------------------------------------
 async function retrieveSalesforceLead() {
   console.log("Retrieving Leads...");
   try {
@@ -672,14 +672,15 @@ async function retrieveSalesforceLead() {
   }
 }
 
+// sends lead to salesforce
 async function sendSalesforceLead() {
   console.log("Sending Leads...");
-  if (!atRiskData || atRiskData.length === 0) {
-    alert("No at-risk data loaded yet. Make sure the charts tab has been viewed.");
+  if (!potentialLeadData || potentialLeadData.length === 0) {
+    alert("No data loaded yet. Make sure the charts tab has been viewed.");
     return;
   }
 
-  const highCompletionViewers = atRiskData.filter(d => d.rate >= 70);
+  const highCompletionViewers = potentialLeadData.filter(d => d.rate >= 70);
   console.log("High Completion Users: ", highCompletionViewers);
 
   if (highCompletionViewers.length === 0) {
@@ -694,7 +695,7 @@ async function sendSalesforceLead() {
         "Content-Type": "application/json",
         "x-session-token": currentUser?.sessionToken
       },
-      body: JSON.stringify({ atRiskData: highCompletionViewers })
+      body: JSON.stringify({ potentialLeadData: highCompletionViewers })
     });
     const data = await res.json();
     alert(data.message ?? "Done.");
@@ -703,6 +704,3 @@ async function sendSalesforceLead() {
     alert("Error sending leads.");
   }
 }
-
-// aws s3 sync ./ s3://hihaho-dashboard-bucket
-// aws cloudfront create-invalidation --distribution-id EU6QCMWHY7PGL --paths "/*"
